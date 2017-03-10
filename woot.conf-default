@@ -2,6 +2,13 @@
 
 # Copy to woot.conf and customize as necessary/desired
 
+# To restrict event searches to particular site (or multiple sites) specify a Site value here
+# See http://api.woot.com/2/docs/events for a list of valid sites
+Site = computers.woot.com
+
+# Uncomment Debug flag (or use the -d CLI option) for verbose messages during execution
+Debug = true
+
 # Separate sets of keywords with semi-colons.  *All* keywords in a set need to be present for a positive match
 <Keywords>
         event = latitude; poweredge; optiplex; dell precision; lenovo laptops; thinkpad; thinkpads; business laptops; 
@@ -11,9 +18,6 @@
         # See https://account.woot.com/applications for your key
         apikey = YOUR_API_KEY_HERE
 </Secrets>
-# Uncomment debug flag (or use the -d CLI option) for verbose messages during execution
-#<debug true>
-#</debug>
 <Email>
         to   = YOUR_EMAIL_ADDRESS
         from = beavis@mtv.com

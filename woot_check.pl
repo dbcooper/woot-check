@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Check Woot.com site for computer deals (Title) that one or more keywords.  Output HTML/send email containing links and details for each [matching] offer
+# Check Woot.com API for deals (Title) that one or more keywords.  Output HTML/send email containing links and details for each [matching] offer
 
 use strict;
 use warnings;
@@ -20,7 +20,7 @@ use Email::Sender::Transport::SMTP;
 use Try::Tiny;
 
 my %opts;
-getopts('c:do:', \%opts);   # -c <config_filename>, -d[ebug], -o <output_filename>
+getopts('c:do:n', \%opts);   # -c <config_filename>, -d[ebug], -o <output_filename>, -n[o email]
 my $config_file = $opts{c} || 'woot.conf';
 my $conf = Config::General->new($config_file);
 my %CONFIG = $conf->getall;
@@ -35,6 +35,8 @@ my $ok_str = $CONFIG{Keywords}->{offer} || $CONFIG{Keywords}->{event};
 my $offer_keywords = str2keywords($ok_str);
 my $api_key = $CONFIG{Secrets}->{apikey};
 die "?No API key defined in $config_file, quitting\n" unless ($api_key);
+my $site = '';
+$site = "&site=$CONFIG{Site}" if ($CONFIG{Site});
 
 my $ua = Mojo::UserAgent->new;
 
@@ -44,7 +46,7 @@ my $ua = Mojo::UserAgent->new;
 # There's too much data in raw response so we use select keyword
 #
 # See http://api.woot.com/2 for more information
-my $start_url = "http://api.woot.com/2/events.json?key=$api_key&site=computers.woot.com&eventType=WootPlus&select=Title,SubTitle,Site,StartDate,EndDate";
+my $start_url = "http://api.woot.com/2/events.json?key=$api_key$site&eventType=WootPlus&select=Title,SubTitle,Site,StartDate,EndDate";
 my $events = get_json($start_url);
 my %keyword_matches;                    # track keyword hits for email summary
 my @matches;
@@ -85,6 +87,8 @@ for my $e (@matches) {
         }
     }
 }
+
+# TODO  Further filtering for offers that have a positive Title match, passed through a coderef
 
 my $summary = "Aggregated " . scalar(@offers) . " offers across " . scalar(@matches) . " events, matching " . join(', ', sort keys %keyword_matches) . " keywords\n";
 warn "?$summary" if ($debug);
@@ -131,6 +135,11 @@ if ($CONFIG{Email}->{to}) {
         ],
         body => $body
     );
+    if ($opts{n}) {
+        warn "?Not sending email as per -n option\n" if ($debug);
+        print $email->as_string if ($debug);
+        exit;
+    }
     my $transport = Email::Sender::Transport::SMTP->new({
             host => $CONFIG{Email}->{smtp},
     });

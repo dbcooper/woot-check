@@ -25,7 +25,7 @@ my $config_file = $opts{c} || 'woot.conf';
 my $conf = Config::General->new($config_file);
 my %CONFIG = $conf->getall;
 my $debug;
-$debug = 1 if ($CONFIG{debug});
+$debug = 1 if ($CONFIG{debug} or $opts{d});
 
 # Woot! API configuration variables
 my $ek_str = $CONFIG{Keywords}->{event};
